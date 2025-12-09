@@ -105,19 +105,19 @@ git clone https://github.com/aidev0/blazel-trainer.git
 
 ## Quick Start (Local Development)
 
+Run `./start.sh` to start all services at once. It handles dependencies, virtual environments, and Ollama setup automatically.
+
+```bash
+./start.sh                           # Local mode with Ollama
+INFERENCE_ENV=production ./start.sh  # Use production GCP inference
+```
+
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- Ollama (for local inference)
 - MongoDB
 
-### 1. Install Ollama
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-ollama pull llama3.1:8b
-```
-
-### 2. Start Services
+### Running Services Individually
 
 **API:**
 ```bash
@@ -150,4 +150,4 @@ pip install -r requirements.txt
 python run.py
 ```
 
-### 3. Open http://localhost:3000
+### Open http://localhost:3000
