@@ -142,4 +142,12 @@ npm install
 npm run dev
 ```
 
+**Trainer (optional, requires GPU):**
+```bash
+cd blazel-trainer
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+python run.py
+```
+
 ### 3. Open http://localhost:3000
