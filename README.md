@@ -45,6 +45,49 @@ git clone https://github.com/aidev0/blazel-trainer.git
 | **Inference** | http://35.229.82.124:8001 |
 | **Trainer** | http://34.168.168.186:8002 |
 
+## How It Works
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              USER WORKFLOW                                    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+1. LOGIN                    2. GENERATE                 3. FEEDBACK
+   ┌─────────┐                 ┌─────────┐                 ┌─────────┐
+   │ Google  │                 │  Topic  │                 │  Edit   │
+   │  OAuth  │                 │    +    │                 │    +    │
+   │         │                 │ Context │                 │  Rate   │
+   └────┬────┘                 └────┬────┘                 └────┬────┘
+        │                           │                           │
+        ▼                           ▼                           ▼
+   ┌─────────┐                 ┌─────────┐                 ┌─────────┐
+   │ WorkOS  │                 │  Llama  │                 │ MongoDB │
+   │   JWT   │                 │  3.1 8B │                 │  Store  │
+   └─────────┘                 └─────────┘                 └─────────┘
+
+4. TRAIN                    5. PERSONALIZE
+   ┌─────────┐                 ┌─────────┐
+   │  LoRA   │                 │ Custom  │
+   │ Adapter │                 │  Model  │
+   └────┬────┘                 └────┬────┘
+        │                           │
+        ▼                           ▼
+   ┌─────────┐                 ┌─────────┐
+   │   GCS   │                 │  vLLM   │
+   │  Upload │                 │ Hot-swap│
+   └─────────┘                 └─────────┘
+```
+
+### Step-by-Step
+
+| Step | Action | Tech Stack |
+|------|--------|------------|
+| **1. Login** | User authenticates via Google | WorkOS → OAuth → JWT token |
+| **2. Generate** | Enter topic + context, get 3 draft variations | Next.js → blazel-api → blazel-inference → vLLM → Llama 3.1 8B |
+| **3. Feedback** | Edit text, add comments, rate like/dislike | React state → REST API → MongoDB |
+| **4. Train** | Trigger LoRA fine-tuning on feedback data | blazel-trainer → PEFT/LoRA → T4 GPU → GCS bucket |
+| **5. Personalize** | Future posts use trained adapter | vLLM dynamic LoRA loading → personalized output |
+
 ## Features
 
 - Generate LinkedIn posts from topic + context
