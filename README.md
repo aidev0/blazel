@@ -1,138 +1,102 @@
-# Blazel - LinkedIn Post Feedback Loop System
+# Blazel
 
-A full-stack demo showing how to capture user feedback on AI-generated content and train personalized models using DPO (Direct Preference Optimization).
+AI-powered LinkedIn post generator with personalized LoRA fine-tuning.
 
 ## Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│ blazel-web  │────▶│ blazel-api  │────▶│  blazel-    │
-│   :3000     │     │   :8000     │     │  inference  │
-│  (Next.js)  │     │  (FastAPI)  │     │   :8001     │
-└─────────────┘     └──────┬──────┘     │  (Ollama)   │
-                          │            └─────────────┘
+┌─────────────┐     ┌─────────────┐     ┌─────────────────┐
+│  Frontend   │────▶│   API       │────▶│  Inference      │
+│  (Next.js)  │     │  (FastAPI)  │     │  (vLLM + LoRA)  │
+└─────────────┘     └──────┬──────┘     └─────────────────┘
                           │
                           ▼
                    ┌─────────────┐
-                   │  blazel-    │
-                   │  trainer    │
-                   │   :8002     │
-                   │   (DPO)     │
+                   │  Trainer    │
+                   │  (LoRA)     │
                    └─────────────┘
 ```
 
-## Prerequisites
+## Repositories
 
+| Service | Description | Repository |
+|---------|-------------|------------|
+| **blazel-web** | Next.js frontend | [github.com/aidev0/blazel-web](https://github.com/aidev0/blazel-web) |
+| **blazel-api** | FastAPI backend | [github.com/aidev0/blazel-api](https://github.com/aidev0/blazel-api) |
+| **blazel-inference** | vLLM inference with LoRA | [github.com/aidev0/blazel-inference](https://github.com/aidev0/blazel-inference) |
+| **blazel-trainer** | LoRA fine-tuning service | [github.com/aidev0/blazel-trainer](https://github.com/aidev0/blazel-trainer) |
+
+## Clone All Repos
+
+```bash
+mkdir blazel && cd blazel
+git clone https://github.com/aidev0/blazel-api.git
+git clone https://github.com/aidev0/blazel-web.git
+git clone https://github.com/aidev0/blazel-inference.git
+git clone https://github.com/aidev0/blazel-trainer.git
+```
+
+## Live Demo
+
+| Service | URL |
+|---------|-----|
+| **Web App** | https://blazel.xyz |
+| **API** | https://blazel-api-9d69c876e191.herokuapp.com |
+| **Inference** | http://35.229.82.124:8001 |
+| **Trainer** | http://34.168.168.186:8002 |
+
+## Features
+
+- Generate LinkedIn posts from topic + context
+- Stream responses via SSE
+- Collect user feedback (edits, ratings)
+- Train personalized LoRA adapters per customer
+- Hot-swap adapters without model reload
+
+## Tech Stack
+
+- **Frontend**: Next.js, TypeScript, Tailwind CSS
+- **Backend**: FastAPI, MongoDB, WorkOS Auth
+- **ML**: vLLM, Llama 3.1 8B, PEFT/LoRA
+- **Infrastructure**: Heroku, GCP (T4 GPU)
+
+## Quick Start (Local Development)
+
+### Prerequisites
 - Python 3.10+
 - Node.js 18+
 - Ollama (for local inference)
+- MongoDB
 
-## Quick Start
-
-### 1. Install Ollama and pull a model
-
+### 1. Install Ollama
 ```bash
-# Install Ollama from https://ollama.ai
-ollama pull llama3.2
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull llama3.1:8b
 ```
 
-### 2. Start all services (4 terminals)
+### 2. Start Services
 
-**Terminal 1 - API:**
+**API:**
 ```bash
 cd blazel-api
-python -m venv venv
-source venv/bin/activate
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python run.py
 ```
 
-**Terminal 2 - Inference:**
+**Inference:**
 ```bash
 cd blazel-inference
-python -m venv venv
-source venv/bin/activate
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-python run.py
+ENV=local python run.py
 ```
 
-**Terminal 3 - Trainer:**
-```bash
-cd blazel-trainer
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python run.py
-```
-
-**Terminal 4 - Web:**
+**Web:**
 ```bash
 cd blazel-web
 npm install
 npm run dev
 ```
 
-### 3. Open the app
-
-Visit http://localhost:3000
-
-## Usage Flow
-
-1. **Generate** - Enter a topic and generate a LinkedIn post
-2. **Edit** - Modify the generated text directly
-3. **Comment** - Add feedback comments (e.g., "too formal", "needs emojis")
-4. **Approve** - Submit the feedback to store the preference pair
-5. **Train** - After 3+ samples, trigger model training
-
-## API Endpoints
-
-### blazel-api (:8000)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/generate` | POST | Generate a post |
-| `/feedback` | POST | Submit feedback |
-| `/training-data` | GET | Get training samples |
-| `/train` | POST | Trigger training |
-| `/customers` | GET | List customers |
-
-### blazel-inference (:8001)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Check Ollama connection |
-| `/generate` | POST | Generate text |
-| `/reload-adapter` | POST | Load LoRA adapter |
-
-### blazel-trainer (:8002)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/train` | POST | Start training job |
-| `/status/{job_id}` | GET | Check job status |
-| `/jobs` | GET | List all jobs |
-
-## Environment Variables
-
-Each service has a `.env` file:
-
-- `blazel-api/.env` - MongoDB URI, service URLs
-- `blazel-inference/.env` - Ollama URL, model name
-- `blazel-trainer/.env` - API URLs, output directory
-- `blazel-web/.env.local` - API URL
-
-## The Data Flywheel
-
-```
-User Edit → Preference Pair → DPO Training → Better Model → Better Posts → User Edit
-     ↑                                                                        │
-     └────────────────────────────────────────────────────────────────────────┘
-```
-
-## Key Concepts for Interview
-
-1. **Small Sample Learning**: DPO + LoRA works with 10-50 samples
-2. **Async Processing**: Training doesn't block the UI
-3. **Diff Capture**: The editor tracks original vs edited text
-4. **Preference Pairs**: `{prompt, chosen (user edit), rejected (AI original)}`
+### 3. Open http://localhost:3000
